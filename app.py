@@ -1,10 +1,38 @@
 # app.py
+
 import streamlit as st
 import pandas as pd
 import numpy as np
+import nltk # <-- Import nltk here
+
+# Import your custom modules
 import normal_preprocessing as normal_pp
 import ds_preprocessing as ds_pp
 import nlp_preprocessing as nlp_pp
+
+# --- NEW FUNCTION TO HANDLE NLTK DOWNLOADS ---
+@st.cache_resource # This decorator ensures the function only runs once
+def ensure_nltk_data():
+    """
+    Checks for NLTK data and downloads it if missing.
+    This is the correct way to handle this in a deployed Streamlit app.
+    """
+    resources = {
+        "punkt": "tokenizers/punkt",
+        "wordnet": "corpora/wordnet",
+        "stopwords": "corpora/stopwords"
+    }
+    for name, path in resources.items():
+        try:
+            nltk.data.find(path)
+        except LookupError:
+            # If not found, download it.
+            st.toast(f"Downloading NLTK resource: {name}...")
+            nltk.download(name)
+
+# --- CALL THE FUNCTION AT THE START OF THE APP ---
+ensure_nltk_data()
+
 
 st.set_page_config(layout="wide", page_title="Data Preprocessor")
 
@@ -13,30 +41,17 @@ st.set_page_config(layout="wide", page_title="Data Preprocessor")
 def convert_df_to_csv(df):
     return df.to_csv(index=False).encode('utf-8')
 
-# --- THIS IS THE NEW ROBUST LOADER ---
+# The rest of your code remains the same...
 def load_csv_with_encoding_detection(uploaded_file):
-    """
-    Tries to load a CSV file by attempting different common encodings.
-    Returns the dataframe and the successful encoding, or (None, None) if all fail.
-    """
     encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
-    
     for encoding in encodings_to_try:
         try:
-            # The uploaded_file is a stream, so we need to reset its position
-            # to the beginning before each read attempt.
             uploaded_file.seek(0)
             df = pd.read_csv(uploaded_file, encoding=encoding)
-            # If we get here, the read was successful
-            # st.success(f"File successfully loaded using '{encoding}' encoding.")
             return df
-        except (UnicodeDecodeError, Exception) as e:
-            # This encoding failed, let the loop try the next one.
-            # print(f"Failed to load with {encoding}: {e}") # Optional: for debugging
+        except (UnicodeDecodeError, Exception):
             continue
-    
-    # If the loop finishes without success
-    st.error(f"Error: Could not decode the file with any of the common encodings ({', '.join(encodings_to_try)}). The file may be corrupted or in an unsupported format.")
+    st.error(f"Error: Could not decode the file with any of the common encodings.")
     return None
 
 def detect_text_heavy_columns(df, threshold=30):
@@ -67,13 +82,11 @@ with col1:
     uploaded_file = st.file_uploader("1. Upload your CSV file", type="csv")
 
     if uploaded_file:
-        # --- USE THE NEW ROBUST LOADER ---
         df = load_csv_with_encoding_detection(uploaded_file)
         if df is not None:
             st.session_state.df = df
             st.session_state.processed_df = None
             st.session_state.report = []
-        # --- END OF CHANGE ---
 
     if st.session_state.df is not None:
         df = st.session_state.df
@@ -156,7 +169,6 @@ with col1:
                 nlp_funcs_to_apply = st.multiselect("Select NLP operations:", options=nlp_operations, default=['lowercase', 'remove_special_chars', 'remove_stopwords'])
         st.divider()
 
-        # --- (The execution button logic remains exactly the same and is already robust) ---
         if st.button("🚀 Run All Preprocessing", type="primary"):
             with st.spinner("Processing... This may take a moment."):
                 processed_df = df.copy()
@@ -183,7 +195,6 @@ with col1:
 
 # --- Main Panel for Data Display ---
 with col2:
-    # ... (This section is unchanged)
     st.header("Data Display")
     if st.session_state.df is not None:
         st.subheader("Original Data")
