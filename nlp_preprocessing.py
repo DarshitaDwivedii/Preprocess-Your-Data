@@ -1,33 +1,26 @@
 # nlp_preprocessing.py
-
 import pandas as pd
 import re
-import nltk # Make sure nltk is imported
+import nltk
 
-# --- NEW: Self-contained downloader function ---
+# --- Self-contained downloader function ---
 def _ensure_nltk_data_is_downloaded():
     """
-    Private function to check for NLTK data and download if missing.
-    This makes the module self-sufficient.
+    Private function to check for all necessary NLTK data and download if missing.
     """
-    try:
-        # Check if the 'punkt' tokenizer data is available.
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        # If not, download it.
-        nltk.download('punkt', quiet=True)
-    
-    try:
-        # Check for stopwords
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        nltk.download('stopwords', quiet=True)
+    # Dictionary of resources to check and download. Key is download name, value is find path.
+    resources = {
+        "punkt": "tokenizers/punkt",
+        "wordnet": "corpora/wordnet",
+        "stopwords": "corpora/stopwords",
+        "punkt_tab": "tokenizers/punkt_tab" # <-- ADDED THIS LINE TO FIX THE ERROR
+    }
 
-    try:
-        # Check for wordnet
-        nltk.data.find('corpora/wordnet')
-    except LookupError:
-        nltk.download('wordnet', quiet=True)
+    for name, path in resources.items():
+        try:
+            nltk.data.find(path)
+        except LookupError:
+            nltk.download(name, quiet=True)
 
 # --- Call the downloader function once when the module is imported ---
 _ensure_nltk_data_is_downloaded()
