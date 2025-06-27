@@ -1,0 +1,11 @@
+# Virtual Environments
+.venv
+venv/
+
+# Python cache
+__pycache__/
+
+# Other common Python files to ignore
+*.pyc
+*.pyo
+*.pyd
