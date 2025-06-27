@@ -1,48 +1,22 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import nltk # <-- Import nltk here
 
-# Import your custom modules
 import normal_preprocessing as normal_pp
 import ds_preprocessing as ds_pp
 import nlp_preprocessing as nlp_pp
 
-# --- NEW FUNCTION TO HANDLE NLTK DOWNLOADS ---
-@st.cache_resource # This decorator ensures the function only runs once
-def ensure_nltk_data():
-    """
-    Checks for NLTK data and downloads it if missing.
-    This is the correct way to handle this in a deployed Streamlit app.
-    """
-    resources = {
-        "punkt": "tokenizers/punkt",
-        "wordnet": "corpora/wordnet",
-        "stopwords": "corpora/stopwords"
-    }
-    for name, path in resources.items():
-        try:
-            nltk.data.find(path)
-        except LookupError:
-            # If not found, download it.
-            st.toast(f"Downloading NLTK resource: {name}...")
-            nltk.download(name)
-
-# --- CALL THE FUNCTION AT THE START OF THE APP ---
-ensure_nltk_data()
-
-
+# --- Page Configuration ---
 st.set_page_config(layout="wide", page_title="Data Preprocessor")
 
 # --- Helper Functions ---
 @st.cache_data
 def convert_df_to_csv(df):
+    """Converts a DataFrame to a CSV string."""
     return df.to_csv(index=False).encode('utf-8')
 
-# The rest of your code remains the same...
 def load_csv_with_encoding_detection(uploaded_file):
+    """Tries to load a CSV by attempting different common encodings."""
     encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
     for encoding in encodings_to_try:
         try:
@@ -51,29 +25,31 @@ def load_csv_with_encoding_detection(uploaded_file):
             return df
         except (UnicodeDecodeError, Exception):
             continue
-    st.error(f"Error: Could not decode the file with any of the common encodings.")
+    st.error("Error: Could not decode the file with any of the common encodings.")
     return None
 
 def detect_text_heavy_columns(df, threshold=30):
+    """Heuristically detects columns that are likely to contain natural language text."""
     text_cols = []
     potential_cols = df.select_dtypes(include=['object', 'string']).columns
     for col in potential_cols:
+        # Calculate the average length of non-null entries
         avg_len = df[col].dropna().astype(str).str.len().mean()
         if avg_len > threshold:
             text_cols.append(col)
     return text_cols
 
-# --- Session State ---
+# --- Session State Initialization ---
 if 'df' not in st.session_state:
     st.session_state.df = None
     st.session_state.processed_df = None
     st.session_state.report = []
 
-# --- Main App ---
+# --- Main App UI ---
 st.title("✨ The Intelligent Data Preprocessor ✨")
 st.write("A one-stop tool to clean, transform, and enhance your data. Configure the steps below and click 'Run'.")
 
-# --- Layout ---
+# --- Layout: Controls Panel and Display Panel ---
 col1, col2 = st.columns([1, 2])
 
 # --- Sidebar for Controls ---
@@ -85,16 +61,16 @@ with col1:
         df = load_csv_with_encoding_detection(uploaded_file)
         if df is not None:
             st.session_state.df = df
-            st.session_state.processed_df = None
+            st.session_state.processed_df = None # Reset on new file upload
             st.session_state.report = []
 
     if st.session_state.df is not None:
         df = st.session_state.df
         
-        # --- (The rest of the UI remains exactly the same) ---
+        # --- UI for Preprocessing Steps ---
         with st.expander("🧹 Normal Preprocessing", expanded=True):
             st.write("Basic cleaning and data wrangling.")
-            with st.expander("🗑️ Column Removal & Renaming", expanded=False):
+            with st.expander("🗑️ Column Removal & Renaming"):
                 cols_to_drop = st.multiselect("Select columns to remove:", options=df.columns.tolist(), key="drop")
                 available_cols_for_rename = [col for col in df.columns if col not in cols_to_drop]
                 cols_to_rename = st.multiselect("Select columns to rename:", options=available_cols_for_rename, key="rename_select")
@@ -107,7 +83,7 @@ with col1:
                 do_drop_duplicates = st.checkbox("Remove Duplicates", value=True, key="dupes")
                 do_drop_constant = st.checkbox("Remove Constant Columns", value=True, key="const")
                 do_convert_dtypes = st.checkbox("Optimize Data Types", value=True, key="dtypes")
-            with st.expander("❓ Handle Missing Values", expanded=False):
+            with st.expander("❓ Handle Missing Values"):
                 do_handle_missing = st.checkbox("Enable Missing Value Handling", key="do_missing_values")
                 cols_with_missing = df.columns[df.isnull().any()].tolist()
                 if not cols_with_missing:
@@ -126,37 +102,40 @@ with col1:
                                 options = ['Mean', 'Median', 'Constant', 'Drop Rows']
                                 default_method = 'Median' if abs(df[col].skew()) > 0.5 else 'Mean'
                                 default_index = options.index(default_method)
-                            else: # Categorical
+                            else:
                                 options = ['Mode', 'Constant', 'Drop Rows']
                                 default_index = 0
                             st.markdown(f"**Column:** `{col}` ({col_type})")
                             selected_strategy = st.selectbox(f"Strategy for `{col}`", options, index=default_index, key=f"missing_{col}")
                             imputation_strategies[col] = selected_strategy
-                    fill_constant_value = st.text_input("Constant value (if selected for any column):", value="Unknown")
-        with st.expander("🔬 Advanced DS Preprocessing", expanded=False):
+                    fill_constant_value = st.text_input("Constant value (if selected):", value="Unknown")
+        
+        with st.expander("🔬 Advanced DS Preprocessing"):
             st.write("Model-specific transformations.")
             potential_cols = [col for col in df.columns if col not in cols_to_drop]
             potential_cols = [rename_map.get(col, col) for col in potential_cols]
             temp_df = df.rename(columns=rename_map)[potential_cols]
             numeric_cols = temp_df.select_dtypes(include=np.number).columns.tolist()
             categorical_cols = temp_df.select_dtypes(include=['object', 'category']).columns.tolist()
-            with st.expander("📈 Outlier Handling", expanded=False):
+
+            with st.expander("📈 Outlier Handling"):
                 do_handle_outliers = st.checkbox("Enable", key="do_outliers")
                 outlier_cols = st.multiselect("Apply to columns:", numeric_cols, default=numeric_cols, key="outlier_cols", disabled=not do_handle_outliers)
                 outlier_method = st.selectbox("Method:", ["iqr", "z-score"], key="outlier_method", disabled=not do_handle_outliers)
                 outlier_multiplier = st.slider("Multiplier:", 1.0, 5.0, 1.5, 0.1, key="outlier_mult", disabled=not do_handle_outliers)
-            with st.expander("📏 Feature Scaling", expanded=False):
+            with st.expander("📏 Feature Scaling"):
                 do_scale_features = st.checkbox("Enable", key="do_scaling")
                 scaling_cols = st.multiselect("Columns to scale:", numeric_cols, default=numeric_cols, key="scaling_cols", disabled=not do_scale_features)
                 scaling_method = st.selectbox("Scaling Method:", ["minmax", "standard"], key="scaling_method", disabled=not do_scale_features)
-            with st.expander("🏷️ Feature Encoding", expanded=False):
+            with st.expander("🏷️ Feature Encoding"):
                 do_encode_features = st.checkbox("Enable", key="do_encoding")
                 encoding_cols = st.multiselect("Columns to encode:", categorical_cols, default=categorical_cols, key="encoding_cols", disabled=not do_encode_features)
                 ohe_threshold = st.number_input("One-Hot Threshold:", 1, 50, 10, key="ohe_thresh", disabled=not do_encode_features)
-            with st.expander("📉 Low Variance Removal", expanded=False):
+            with st.expander("📉 Low Variance Removal"):
                 do_remove_low_variance = st.checkbox("Enable", help="Run AFTER scaling for best results.", key="do_low_var")
                 variance_threshold = st.number_input("Variance Threshold:", 0.0, 1.0, 0.01, format="%.3f", key="var_thresh", disabled=not do_remove_low_variance)
-        with st.expander("📝 NLP Preprocessing", expanded=False):
+        
+        with st.expander("📝 NLP Preprocessing"):
             st.write("Clean and process natural language text.")
             text_cols = detect_text_heavy_columns(df)
             if not text_cols:
@@ -169,10 +148,12 @@ with col1:
                 nlp_funcs_to_apply = st.multiselect("Select NLP operations:", options=nlp_operations, default=['lowercase', 'remove_special_chars', 'remove_stopwords'])
         st.divider()
 
+        # --- Execution Button and Pipeline Logic ---
         if st.button("🚀 Run All Preprocessing", type="primary"):
             with st.spinner("Processing... This may take a moment."):
                 processed_df = df.copy()
                 report = []
+                # --- The order of operations is important! ---
                 if cols_to_drop: processed_df, report = normal_pp.drop_columns_manual(processed_df, report, cols_to_drop)
                 if rename_map: processed_df, report = normal_pp.rename_columns_manual(processed_df, report, rename_map)
                 if do_strip_whitespace: processed_df, report = normal_pp.strip_whitespace_from_strings(processed_df, report)
@@ -190,6 +171,7 @@ with col1:
                 if do_encode_features: processed_df, report = ds_pp.encode_categorical_features(processed_df, report, encoding_cols, ohe_threshold)
                 if do_scale_features: processed_df, report = ds_pp.scale_features(processed_df, report, scaling_cols, scaling_method)
                 if do_remove_low_variance: processed_df, report = ds_pp.remove_low_variance_features(processed_df, report, variance_threshold)
+                
                 st.session_state.processed_df = processed_df
                 st.session_state.report = report
 
@@ -201,6 +183,7 @@ with col2:
         st.dataframe(st.session_state.df)
     else:
         st.info("Please upload a CSV file using the control panel on the left to begin.")
+    
     if st.session_state.processed_df is not None:
         st.divider()
         st.subheader("✨ Final Processed Data")
@@ -209,5 +192,6 @@ with col2:
         with st.container(height=300):
             for item in st.session_state.report:
                 st.markdown(f"- {item}")
+        
         csv_data = convert_df_to_csv(st.session_state.processed_df)
         st.download_button("📥 Download Processed CSV", csv_data, "processed_data.csv", "text/csv")
