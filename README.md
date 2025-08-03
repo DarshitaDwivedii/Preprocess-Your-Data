@@ -12,7 +12,7 @@ An interactive web application built with Streamlit that automates, simplifies, 
 
 🌐 **Try the Live Application**
 <br>
-[**[YOUR-DEPLOYMENT-LINK]**](https://YOUR-DEPLOYMENT-LINK)
+[**[YOUR-DEPLOYMENT-LINK]**](https://preprocess-your-data.streamlit.app/)
 
 ---
 
@@ -24,20 +24,10 @@ This tool is designed to be a perfect blend of **intelligent automation** and **
 
 ## 🚀 Key Features
 
--   **Intelligent Analysis Engine:** Automatically scans the uploaded dataset for:
-    -   Missing Values (counts and percentages).
-    -   Duplicate Rows.
-    -   Constant & Highly Correlated Columns.
-    -   Potential ID / High-Cardinality Columns.
-    -   Highly Empty Columns (>50% missing).
-    -   Outliers in continuous numerical data.
-    -   Data type inconsistencies (e.g., numbers stored as text).
--   **Smart UI Defaults:** The control panel is automatically pre-configured based on the analysis, pre-selecting columns for dropping and suggesting optimal cleaning strategies.
--   **Comprehensive Preprocessing Toolkit:** A wide range of cleaning and transformation options are available:
-    -   **Normal Preprocessing:** Handle duplicates, missing values (with multiple strategies), rename columns, and strip whitespace.
-    -   **Advanced DS Preprocessing:** Perform outlier capping (IQR/Z-score), feature scaling (MinMax/Standard), categorical encoding (One-Hot/Label), and low-variance feature removal.
-    -   **NLP Preprocessing:** A full pipeline to clean text data, including lowercasing, stopword removal, lemmatization, and removal of URLs/special characters.
--   **Advanced Interactive Visualizations:** A data exploration playground that automatically selects the best chart (Histogram, Bar, Pie, Scatter, Box Plot, Heatmap) based on the data types of the selected columns.
+-   **Intelligent Analysis Engine:** Automatically scans the uploaded dataset for missing values, duplicates, constant columns, potential IDs, highly empty columns, outliers, and more.
+-   **Smart UI Defaults:** The control panel is automatically pre-configured based on the analysis, pre-selecting problematic columns for removal and suggesting optimal cleaning strategies.
+-   **Comprehensive Preprocessing Toolkit:** A wide range of options for normal cleaning, advanced data science transformations (scaling, encoding), and NLP text processing.
+-   **Advanced Interactive Visualizations:** A data exploration playground that automatically selects the best chart (Histogram, Bar, Scatter, Box Plot, Heatmap) based on the data types of the selected columns.
 -   **Transparent Logging:** A detailed and attractive log of every action taken, providing a clear audit trail of the entire cleaning process.
 
 ---
@@ -52,39 +42,68 @@ This tool is designed to be a perfect blend of **intelligent automation** and **
 
 ## 📸 Application Showcase
 
-### 1. The Interactive Analysis Report
+The application workflow is designed to be intuitive, guiding the user from analysis to action.
 
-Upon uploading a dataset, the application generates a multi-layered report.
+### 1. Instant Analysis & Smart Suggestions
 
--   **Health Report & Smart Suggestions:** The first section provides a high-level overview and highlights critical issues found in the data. The "Smart Suggestions" boxes clearly state what was found and what action has been pre-selected in the controls, bridging the gap between analysis and action.
+Upon uploading a dataset, the application immediately generates a multi-layered report.
 
-    `![Analysis Report and Suggestions](screenshots/analysis-report.png)`
+-   **The Health Report** provides a high-level overview, while the **Smart Suggestions** highlight critical issues found in the data, such as potential ID columns and significant outliers. This bridges the gap between analysis and action.
 
-<br>
+    <!-- Use the screenshot named: showcase-report.png -->
+    ![Analysis Report and Suggestions](screenshots\Smart_Suggestions.png)
 
--   **Data Visualization Playground:** This is a powerful, interactive tool for data exploration. The application intelligently distinguishes between continuous numeric data and discrete/categorical data to provide the most insightful plot type.
-    -   **Numeric vs. Categorical (`Age` vs. `Pclass`):** Automatically generates a Box Plot.
-    -   **Numeric (`Age`):** Generates a Histogram with an intelligent default for the number of bins and an option to use a log scale for skewed data.
+-   The **Column Summary Table** gives a dense, sortable overview of every column, with visual heatmaps to quickly identify missing data and high-cardinality features.
 
-    `![Advanced Visualization Playground](screenshots/visualization-playground.png)`
+    <!-- Use the screenshot named: showcase-summary-table.png -->
+    ![Column Summary Table](screenshots\Summary.png)
 
-### 2. The Controls Panel & Preprocessing
+### 2. Intelligently Pre-configured Controls
 
-This is the command center where the user confirms or adjusts the tool's suggestions before running the pipeline.
+The true power of the tool lies in its ability to translate analysis into action. The control panel is automatically configured based on the suggestions.
 
--   **Intelligent Defaults:** The screenshot below shows how the tool has automatically pre-selected the `PassengerId` and `Cabin` columns for dropping and has pre-ticked the "Enable Outlier Capping" checkbox based on the initial analysis of the Titanic dataset.
--   **Full User Control:** While the defaults are smart, the user has complete manual control to change any setting before execution.
+-   Here, the tool has identified `PassengerId` and `Name` as potential ID columns and has **pre-selected them for removal**. The user can then accept or override this suggestion.
 
-    `![Controls Panel with Smart Defaults](screenshots/controls-panel.png)`
+    <!-- Use the screenshot named: showcase-controls.png -->
+    ![Controls Panel with Smart Defaults](screenshots\normal.png)
 
-### 3. The Final Output
+-   The same intelligence applies to all sections, including the **NLP Preprocessing** module, which detects text columns and suggests a robust set of default cleaning operations.
 
-After processing, the user can review the results and audit the entire workflow.
+    <!-- Use the screenshot named: showcase-nlp.png -->
+    ![NLP Preprocessing Panel](screenshots\NLP.png)
 
--   **Data Viewer:** A side-by-side comparison of the original and the final, cleaned DataFrame.
--   **Processing Log:** A clean, readable, and structured log detailing every single transformation applied to the data, complete with icons and collapsible sections.
+### 3. The Advanced Visualization Playground
 
-    `![Final Output and Processing Log](screenshots/final-output.png)`
+This is a powerful, interactive tool for deep data exploration. The application intelligently selects the best chart type for your analysis.
+
+-   The playground can create **univariate plots**, offering a choice between Bar and Pie charts for low-cardinality data.
+
+    <!-- Use the screenshot named: showcase-pie-chart.png -->
+    ![Pie Chart Visualization](screenshots\Visualisation-1.1.png)
+
+-   It excels at **bivariate analysis**, automatically generating a Scatter Plot for two numeric columns to reveal correlations and clusters.
+
+    <!-- Use the screenshot named: showcase-scatter-plot.png -->
+    ![Scatter Plot Visualization](screenshots\Visualisation-2.png)
+
+-   The tool is also smart enough to prevent user error, blocking attempts to visualize high-cardinality ID columns that would produce a meaningless chart.
+
+    <!-- Use the screenshot named: showcase-id-blocking.png -->
+    ![ID Column Blocking Feature](screenshots\Visualisation-0.png)
+
+### 4. Final Review and Audit
+
+After running the pipeline, the user can review the results and audit the entire workflow.
+
+-   The **Data Viewer** provides a clear side-by-side comparison of the original and the final, cleaned DataFrame. This screenshot shows the result of running the NLP cleaner on a dataset.
+
+    <!-- Use the screenshot named: showcase-data-viewer.png -->
+    ![Final Output in Data Viewer](screenshots\Transformed.png)
+
+-   The **Processing Log** generates a clean, readable, and structured report detailing every single transformation applied to the data, ensuring complete transparency.
+
+    <!-- Use the screenshot named: showcase-log.png -->
+    ![Processing Log](screenshots\log.png)
 
 ---
 
@@ -95,31 +114,15 @@ After processing, the user can review the results and audit the entire workflow.
 
 The project is structured into several modular Python scripts, each with a specific responsibility.
 
--   **`app.py` - The Core Application:**
-    -   This is the main script that runs the Streamlit web application.
-    -   It handles the UI layout (tabs, columns, expanders), session state management, and the overall workflow logic.
-    -   It contains the "execution engine" that gathers user selections from the UI and calls the appropriate backend functions in a specific, robust order.
-    -   The advanced visualization logic, which intelligently selects the correct plot type based on data characteristics, is also located here.
+-   **`app.py` - The Core Application:** Runs the Streamlit web app, handles the UI layout, session state, and the overall workflow logic. It contains the "execution engine" and the advanced visualization logic.
 
--   **`analysis.py` - The Brains:**
-    -   This module contains the `generate_full_analysis` function, which is the non-visual "brain" of the application.
-    -   It takes a raw DataFrame and performs a deep statistical analysis to identify all the key data quality issues mentioned in the features list.
-    -   It uses a series of heuristics (e.g., uniqueness ratio for ID detection, unique value counts for outlier filtering) to make its suggestions more context-aware and human-like.
-    -   It returns a comprehensive dictionary (the "analysis report") that drives the entire UI.
+-   **`analysis.py` - The Brains:** Contains the `generate_full_analysis` function. It takes a raw DataFrame, performs a deep statistical analysis using a series of heuristics (e.g., uniqueness ratio for ID detection), and returns a comprehensive dictionary that drives the entire UI.
 
--   **`normal_preprocessing.py` - The Basic Toolkit:**
-    -   This module contains functions for fundamental data cleaning tasks.
-    -   It relies heavily on efficient, built-in Pandas methods like `.drop_duplicates()`, `.fillna()`, and `.rename()`.
-    -   Each function takes a DataFrame and a report list, performs its operation, appends a structured log entry to the report, and returns the modified DataFrame.
+-   **`normal_preprocessing.py` - The Basic Toolkit:** Contains functions for fundamental data cleaning tasks, relying on efficient, built-in Pandas methods.
 
--   **`ds_preprocessing.py` - The Advanced Toolkit:**
-    -   This module leverages the power of Scikit-learn for more advanced, machine learning-oriented preprocessing.
-    -   It handles tasks like feature scaling (`MinMaxScaler`, `StandardScaler`), categorical encoding (`LabelEncoder`), and feature selection (`VarianceThreshold`).
-    -   This module contains important logic to handle edge cases, such as filling missing values in categorical columns before attempting to encode them, thus preventing common errors.
+-   **`ds_preprocessing.py` - The Advanced Toolkit:** Leverages Scikit-learn for more advanced, machine learning-oriented preprocessing like scaling, encoding, and feature selection.
 
--   **`nlp_preprocessing.py` - The Text Specialist:**
-    -   This module uses NLTK (Natural Language Toolkit) and Regular Expressions to provide a standard pipeline for cleaning text data.
-    -   It handles common NLP tasks such as lowercasing, stopword removal, and lemmatization.
+-   **`nlp_preprocessing.py` - The Text Specialist:** Uses NLTK and Regular Expressions to provide a standard pipeline for cleaning text data.
 
 </details>
 
