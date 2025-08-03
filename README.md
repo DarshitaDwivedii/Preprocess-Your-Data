@@ -130,6 +130,12 @@ Before or after cleaning, the user can use the playground for deep, interactive 
   <img src="screenshots/Visualisation-2.png" alt="Scatter Plot Visualization" width="800px">
 </p>
 
+- When comparing two Categorical columns, it automatically generates a heatmap to help the user visually.
+
+<p align="center">
+  <img src="screenshots/Visualisation-2.2.png" alt="heatmap" width="800px">
+</p>
+
 -   The tool is also smart enough to prevent user error, blocking attempts to visualize high-cardinality ID columns that would produce a meaningless chart.
 
 <p align="center">
