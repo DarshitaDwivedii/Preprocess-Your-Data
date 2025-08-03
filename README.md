@@ -51,12 +51,12 @@ Upon uploading a dataset, the application immediately generates a multi-layered 
 -   **The Health Report** provides a high-level overview, while the **Smart Suggestions** highlight critical issues found in the data, such as potential ID columns and significant outliers. This bridges the gap between analysis and action.
 
     <!-- Use the screenshot named: showcase-report.png -->
-    ![Analysis Report and Suggestions](screenshots\Smart_Suggestions.png)
+    ![Analysis Report and Suggestions](screenshots/Smart_Suggestions.png)
 
 -   The **Column Summary Table** gives a dense, sortable overview of every column, with visual heatmaps to quickly identify missing data and high-cardinality features.
 
     <!-- Use the screenshot named: showcase-summary-table.png -->
-    ![Column Summary Table](screenshots\Summary.png)
+    ![Column Summary Table](screenshots/Summary.png)
 
 ### 2. Intelligently Pre-configured Controls
 
@@ -65,12 +65,12 @@ The true power of the tool lies in its ability to translate analysis into action
 -   Here, the tool has identified `PassengerId` and `Name` as potential ID columns and has **pre-selected them for removal**. The user can then accept or override this suggestion.
 
     <!-- Use the screenshot named: showcase-controls.png -->
-    ![Controls Panel with Smart Defaults](screenshots\normal.png)
+    ![Controls Panel with Smart Defaults](screenshots/normal.png)
 
 -   The same intelligence applies to all sections, including the **NLP Preprocessing** module, which detects text columns and suggests a robust set of default cleaning operations.
 
     <!-- Use the screenshot named: showcase-nlp.png -->
-    ![NLP Preprocessing Panel](screenshots\NLP.png)
+    ![NLP Preprocessing Panel](screenshots/NLP.png)
 
 ### 3. The Advanced Visualization Playground
 
@@ -79,17 +79,17 @@ This is a powerful, interactive tool for deep data exploration. The application 
 -   The playground can create **univariate plots**, offering a choice between Bar and Pie charts for low-cardinality data.
 
     <!-- Use the screenshot named: showcase-pie-chart.png -->
-    ![Pie Chart Visualization](screenshots\Visualisation-1.1.png)
+    ![Pie Chart Visualization](screenshots/Visualisation-1.1.png)
 
 -   It excels at **bivariate analysis**, automatically generating a Scatter Plot for two numeric columns to reveal correlations and clusters.
 
     <!-- Use the screenshot named: showcase-scatter-plot.png -->
-    ![Scatter Plot Visualization](screenshots\Visualisation-2.png)
+    ![Scatter Plot Visualization](screenshots/Visualisation-2.png)
 
 -   The tool is also smart enough to prevent user error, blocking attempts to visualize high-cardinality ID columns that would produce a meaningless chart.
 
     <!-- Use the screenshot named: showcase-id-blocking.png -->
-    ![ID Column Blocking Feature](screenshots\Visualisation-0.png)
+    ![ID Column Blocking Feature](screenshots/Visualisation-0.png)
 
 ### 4. Final Review and Audit
 
@@ -98,12 +98,12 @@ After running the pipeline, the user can review the results and audit the entire
 -   The **Data Viewer** provides a clear side-by-side comparison of the original and the final, cleaned DataFrame. This screenshot shows the result of running the NLP cleaner on a dataset.
 
     <!-- Use the screenshot named: showcase-data-viewer.png -->
-    ![Final Output in Data Viewer](screenshots\Transformed.png)
+    ![Final Output in Data Viewer](screenshots/Transformed.png)
 
 -   The **Processing Log** generates a clean, readable, and structured report detailing every single transformation applied to the data, ensuring complete transparency.
 
     <!-- Use the screenshot named: showcase-log.png -->
-    ![Processing Log](screenshots\log.png)
+    ![Processing Log](screenshots/log.png)
 
 ---
 
@@ -134,8 +134,8 @@ To run this project locally, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/YOUR-USERNAME/YOUR-REPOSITORY-NAME.git
-    cd YOUR-REPOSITORY-NAME
+    git clone https://github.com/DarshitaDwivedii/Preprocess-Your-Data.git
+    cd Preprocess-Your-Data
     ```
 
 2.  **Create and activate a virtual environment:**
@@ -151,7 +151,6 @@ To run this project locally, follow these steps:
     ```bash
     pip install -r requirements.txt
     ```
-    *(Note: You will need to create a `requirements.txt` file by running `pip freeze > requirements.txt` in your terminal.)*
 
 4.  **Run the Streamlit application:**
     ```bash
