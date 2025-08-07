@@ -80,8 +80,29 @@ def display_interactive_analysis(df, analysis_report):
         if len(formatted_items) > limit: return ", ".join(formatted_items[:limit]) + f", and {len(formatted_items) - limit} more"
         return ", ".join(formatted_items)
 
-    id_cols = quality.get('potential_id_cols', []); outlier_cols = quality.get('significant_outlier_cols', [])
-    if id_cols: suggestions.append({"icon": "🆔", "title": "Potential ID Columns", "text": f"Found **{len(id_cols)}** columns that appear to be unique identifiers.", "details": f"**Action:** Pre-selected for dropping: {format_list(id_cols)}", "color": "#FFF3CD"})
+    # Updated logic to create the suggestion cards, including for high missing values
+    id_cols = quality.get('potential_id_cols', [])
+    outlier_cols = quality.get('significant_outlier_cols', [])
+    high_missing_cols = quality.get('high_missing_cols', [])
+
+    if high_missing_cols:
+        suggestions.append({
+            "icon": "🕳️",
+            "title": "Highly Missing Data",
+            "text": f"Found **{len(high_missing_cols)}** columns with >50% missing values.",
+            "details": f"**Action:** Pre-selected for dropping: {format_list(high_missing_cols)}",
+            "color": "#FFF8E1"
+        })
+
+    if id_cols:
+        suggestions.append({
+            "icon": "🆔",
+            "title": "Potential ID Columns",
+            "text": f"Found **{len(id_cols)}** columns that appear to be unique identifiers.",
+            "details": f"**Action:** Pre-selected for dropping: {format_list(id_cols)}",
+            "color": "#FFF3CD"
+        })
+        
     if outlier_cols: suggestions.append({"icon": "📈", "title": "Significant Outliers", "text": f"Found **{len(outlier_cols)}** columns with >1% outlier data.", "details": f"**Action:** Pre-selected for capping: {format_list(outlier_cols)}", "color": "#D1E7DD"})
     if quality.get('has_duplicates', False): suggestions.append({"icon": "📋", "title": "Duplicate Rows", "text": f"The dataset contains **{quality['total_duplicate_rows']}** duplicate rows.", "details": f"**Action:** 'Remove Duplicates' option is pre-ticked.", "color": "#F8D7DA"})
 
@@ -167,7 +188,6 @@ def display_processing_log(report):
             with st.expander(f"**{cat_name} Log**", expanded=True):
                 for log in logs: render_log(log); st.markdown("---")
 
-# --- THIS IS THE MISSING FUNCTION THAT HAS BEEN RESTORED ---
 def init_session_state():
     if 'df' not in st.session_state:
         st.session_state.df = None
@@ -206,7 +226,13 @@ with col1:
         st.divider()
         with st.expander("🧹 Normal Preprocessing", expanded=True):
             with st.expander("🗑️ Column Removal & Renaming"):
-                cols_to_drop = st.multiselect("Select columns to remove:", options=df.columns.tolist(), key="drop", default=quality_report.get('potential_id_cols', []))
+                # Updated logic to combine multiple lists for default selection
+                default_ids = quality_report.get('potential_id_cols', [])
+                default_missing = quality_report.get('high_missing_cols', [])
+                # Use a set to handle cases where a column might be in multiple lists
+                cols_to_drop_default = list(set(default_ids + default_missing))
+                
+                cols_to_drop = st.multiselect("Select columns to remove:", options=df.columns.tolist(), key="drop", default=cols_to_drop_default)
                 available_cols_for_rename = [col for col in df.columns if col not in cols_to_drop]
                 cols_to_rename = st.multiselect("Select columns to rename:", options=available_cols_for_rename, key="rename_select")
                 rename_map = {}
@@ -220,7 +246,7 @@ with col1:
                 do_convert_dtypes = st.checkbox("Optimize Data Types (e.g., int, float)", value=True, key="dtypes")
             with st.expander("❓ Handle Missing Values (Per Column)"):
                 do_handle_missing = st.checkbox("Enable Missing Value Handling", key="do_missing_values")
-                missing_cols = [col for col, info in col_details.items() if info['missing_count'] > 0]
+                missing_cols = [col for col, info in col_details.items() if info['missing_count'] > 0 and col not in cols_to_drop]
                 if not missing_cols: st.info("No missing values detected.")
                 elif do_handle_missing:
                     imputation_strategies = {}
@@ -279,7 +305,8 @@ with col1:
                 if do_drop_duplicates: processed_df, r = normal_pp.drop_duplicates(processed_df, []); report.extend(r)
                 if do_drop_constant: processed_df, r = normal_pp.drop_constant_columns(processed_df, []); report.extend(r)
                 if do_convert_dtypes: processed_df, r = normal_pp.convert_dtypes(processed_df, []); report.extend(r)
-                if do_handle_missing: processed_df, r = normal_pp.handle_missing_values_per_column(processed_df, [], strategies=imputation_strategies); report.extend(r)
+                if do_handle_missing and 'imputation_strategies' in locals():
+                    processed_df, r = normal_pp.handle_missing_values_per_column(processed_df, [], strategies=imputation_strategies); report.extend(r)
                 if 'nlp_target_col' in locals() and 'nlp_funcs_to_apply' in locals() and nlp_funcs_to_apply and nlp_target_col in processed_df.columns:
                     processed_df, r = nlp_pp.process_text_column(processed_df, [], nlp_target_col, nlp_funcs_to_apply); report.extend(r)
                 if do_handle_outliers:

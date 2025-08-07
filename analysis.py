@@ -7,11 +7,13 @@ def generate_full_analysis(df):
     """
     total_rows = len(df)
     
+    # Added 'high_missing_cols' key to the summary dictionary
     quality_summary = {
         'constant_cols': [], 'highly_correlated_pairs': [], 'numeric_like_object_cols': [],
         'highly_imbalanced_cols': [], 'total_missing_cells': int(df.isnull().sum().sum()),
         'total_duplicate_rows': int(df.duplicated().sum()), 'inconsistent_col_names': [],
-        'potential_datetime_cols': [], 'mixed_type_cols': [], 'potential_id_cols': []
+        'potential_datetime_cols': [], 'mixed_type_cols': [], 'potential_id_cols': [],
+        'high_missing_cols': [] # <-- NEW
     }
 
     column_details = {}
@@ -30,13 +32,18 @@ def generate_full_analysis(df):
             'unique_count': col_data.nunique(),
         }
         
+        # New logic to detect and store columns with high missing values
+        if details['missing_percentage'] > 50:
+            quality_summary['high_missing_cols'].append(col)
+
         row_summary = {'Column': col, 'Data Type': str(details['dtype'])}
 
         if total_rows > 0:
             unique_ratio = details['unique_count'] / total_rows
             is_potential_id = (unique_ratio > 0.95) or \
                               (any(keyword in str(col).lower() for keyword in id_keywords) and unique_ratio > 0.85)
-            if is_potential_id and details['unique_count'] > 20:
+            # Ensure a column with high missing values isn't also flagged as an ID
+            if is_potential_id and details['unique_count'] > 20 and col not in quality_summary['high_missing_cols']:
                 quality_summary['potential_id_cols'].append(col)
 
         if pd.api.types.is_numeric_dtype(col_data):
@@ -119,6 +126,7 @@ def format_analysis_to_text(analysis_report):
     report_lines.append(f"\n--- Dataset Overview ---\nRows: {overview['rows']:,}\nColumns: {overview['columns']}\nTotal Cells: {total_cells:,}\nMemory Usage: {mem_usage_mb:.2f} MB")
     report_lines.append(f"\n--- Data Quality Warnings ---\nMissing Cells: {quality['total_missing_cells']:,} ({missing_pct:.2f}%)\nDuplicate Rows: {quality['total_duplicate_rows']:,}")
     
+    if quality.get('high_missing_cols'): report_lines.append(f"[!] High Missing Values (>50%): {', '.join(quality['high_missing_cols'])}")
     if quality.get('potential_id_cols'): report_lines.append(f"[!] Potential ID Columns: {', '.join(quality['potential_id_cols'])}")
     if quality.get('significant_outlier_cols'): report_lines.append(f"[!] Significant Outlier Columns (>1%): {', '.join(quality['significant_outlier_cols'])}")
     if quality.get('constant_cols'): report_lines.append(f"[!] Constant Columns: {', '.join(quality['constant_cols'])}")
