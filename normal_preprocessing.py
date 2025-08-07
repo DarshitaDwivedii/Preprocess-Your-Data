@@ -16,6 +16,8 @@ def drop_duplicates(df, report):
         report.append(_create_log_entry("✅", "No duplicate rows found."))
     return df, report
 
+# In normal_preprocessing.py
+
 def handle_missing_values_per_column(df, report, strategies):
     if not strategies: return df, report
     
@@ -33,9 +35,23 @@ def handle_missing_values_per_column(df, report, strategies):
             continue
         method = strategy[0] if isinstance(strategy, tuple) else strategy
         filler, success = None, True
+        
         if method == 'Mean': filler = df[col].mean()
         elif method == 'Median': filler = df[col].median()
-        elif method == 'Mode': filler = df[col].mode()[0] if not df[col].mode().empty else "Unknown"
+        
+        # --- START OF FIX ---
+        elif method == 'Mode':
+            if not df[col].mode().empty:
+                filler = df[col].mode()[0]
+            else:
+                # If mode is empty, use a type-appropriate fallback
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    filler = df[col].median() # Use median for numeric columns
+                    details.append(f"⚠️ Mode for `{col}` was empty. Used **Median** as a fallback.")
+                else:
+                    filler = "Unknown" # Use "Unknown" for text/object columns
+        # --- END OF FIX ---
+                    
         elif method == 'Constant':
             filler = strategy[1]
             if pd.api.types.is_numeric_dtype(df[col]):
@@ -44,9 +60,12 @@ def handle_missing_values_per_column(df, report, strategies):
                 if pd.isna(filler):
                     details.append(f"❗ Skipped `{col}`: Could not fill numeric column with non-numeric constant '{original_filler}'.")
                     success = False
+                    
         if filler is not None and success:
             df[col].fillna(filler, inplace=True)
-            details.append(f"Filled missing values in `{col}` using **{method}**.")
+            # Check if we already added a special note (like the mode fallback)
+            if not any(f"`{col}`" in d for d in details):
+                 details.append(f"Filled missing values in `{col}` using **{method}**.")
     
     if details:
         report.append(_create_log_entry("❓", "Handled Missing Values", details))
