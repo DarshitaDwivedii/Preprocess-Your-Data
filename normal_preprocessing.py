@@ -22,6 +22,7 @@ def handle_missing_values_per_column(df, report, strategies):
     if not strategies: return df, report
     
     details = []
+    # Handle 'Drop Rows' strategy first and separately
     cols_to_drop_rows = [col for col, method in strategies.items() if method == 'Drop Rows']
     if cols_to_drop_rows:
         initial_rows = len(df)
@@ -30,43 +31,56 @@ def handle_missing_values_per_column(df, report, strategies):
         if rows_dropped > 0:
             details.append(f"Dropped {rows_dropped} rows due to missing values in: `{', '.join(cols_to_drop_rows)}`")
 
+    # Process all other imputation strategies
     for col, strategy in strategies.items():
+        # Skip columns that were part of 'Drop Rows' or have no missing values
         if strategy == 'Drop Rows' or col not in df.columns or df[col].isnull().sum() == 0:
             continue
+            
         method = strategy[0] if isinstance(strategy, tuple) else strategy
         filler, success = None, True
+
+        is_numeric = pd.api.types.is_numeric_dtype(df[col])
+
+        if method in ['Mean', 'Median']:
+            if not is_numeric:
+                details.append(f"❗ Skipped `{col}`: Cannot use **{method}** on a non-numeric column.")
+                success = False
+            else:
+                filler = df[col].mean() if method == 'Mean' else df[col].median()
         
-        if method == 'Mean': filler = df[col].mean()
-        elif method == 'Median': filler = df[col].median()
-        
-        # --- START OF FIX ---
         elif method == 'Mode':
             if not df[col].mode().empty:
                 filler = df[col].mode()[0]
             else:
-                # If mode is empty, use a type-appropriate fallback
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    filler = df[col].median() # Use median for numeric columns
-                    details.append(f"⚠️ Mode for `{col}` was empty. Used **Median** as a fallback.")
+                # Fallback if mode is empty
+                if is_numeric:
+                    filler = df[col].median()
+                    details.append(f"⚠️ Mode for `{col}` was empty; used **Median** as a fallback.")
                 else:
-                    filler = "Unknown" # Use "Unknown" for text/object columns
-        # --- END OF FIX ---
-                    
+                    filler = "Unknown"
+        
         elif method == 'Constant':
             filler = strategy[1]
-            if pd.api.types.is_numeric_dtype(df[col]):
+            if is_numeric:
                 original_filler = filler
+                # Attempt to convert the user's constant to a number
                 filler = pd.to_numeric(filler, errors='coerce')
                 if pd.isna(filler):
                     details.append(f"❗ Skipped `{col}`: Could not fill numeric column with non-numeric constant '{original_filler}'.")
                     success = False
-                    
+
+        # Only perform the fill if a valid filler was determined
         if filler is not None and success:
-            df[col].fillna(filler, inplace=True)
-            # Check if we already added a special note (like the mode fallback)
-            if not any(f"`{col}`" in d for d in details):
-                 details.append(f"Filled missing values in `{col}` using **{method}**.")
-    
+            # Use a try-except block as a final safeguard against rare dtype issues
+            try:
+                df[col].fillna(filler, inplace=True)
+                # Add to details only if not already handled by a special message (like mode fallback)
+                if not any(f"`{col}`" in d for d in details):
+                    details.append(f"Filled missing values in `{col}` using **{method}**.")
+            except TypeError:
+                details.append(f"❗ Skipped `{col}` due to a data type mismatch with filler '{filler}'.")
+
     if details:
         report.append(_create_log_entry("❓", "Handled Missing Values", details))
     return df, report
