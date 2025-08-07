@@ -6,11 +6,20 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 def _ensure_nltk_data_is_downloaded():
-    """Checks for necessary NLTK data and downloads if missing."""
-    resources = {"punkt": "tokenizers/punkt", "wordnet": "corpora/wordnet", "stopwords": "corpora/stopwords"}
+    """Checks for all necessary NLTK data and downloads if missing."""
+    # THIS DICTIONARY IS THE KEY. WE ADD THE MISSING 'punkt_tab'.
+    resources = {
+        "punkt": "tokenizers/punkt",
+        "wordnet": "corpora/wordnet",
+        "stopwords": "corpora/stopwords",
+        "punkt_tab": "tokenizers/punkt_tab" # <-- THIS IS THE FIX
+    }
     for name, path in resources.items():
-        try: nltk.data.find(path)
-        except LookupError: nltk.download(name, quiet=True)
+        try:
+            nltk.data.find(path)
+        except LookupError:
+            nltk.download(name, quiet=True)
+
 _ensure_nltk_data_is_downloaded()
 
 def _create_log_entry(icon, title, details=None, category="NLP"):
