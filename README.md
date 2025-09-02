@@ -6,10 +6,6 @@ An interactive web application built with Streamlit that automates, simplifies, 
 
 ### **Quick Links**
 
-🎥 **Watch the Demo Video on YouTube**
-<br>
-[![Watch the video](https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg)](https://YOUR-YOUTUBE-LINK)
-
 🌐 **Try the Live Application**
 <br>
 [**https://preprocess-your-data.streamlit.app/**](https://preprocess-your-data.streamlit.app/)
